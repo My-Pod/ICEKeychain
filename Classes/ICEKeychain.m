@@ -10,7 +10,6 @@
 #import <Security/Security.h>
 #import <UIKit/UIKit.h>
 
-extern NSString *keychainIdentify;
 
 @implementation ICEKeychain
 
@@ -68,7 +67,7 @@ extern NSString *keychainIdentify;
     keychainItem[(__bridge id)kSecClass] = (__bridge id)kSecClassInternetPassword; // We specify what kind of keychain item this is.
     keychainItem[(__bridge id)kSecAttrAccessible] = (__bridge id)kSecAttrAccessibleWhenUnlocked; // This item can only be accessed when the user unlocks the device.
     
-    keychainItem[(__bridge id)kSecAttrServer] = keychainIdentify;
+    keychainItem[(__bridge id)kSecAttrServer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleIdentifier"];;
     
     keychainItem[(__bridge id)kSecReturnData] = (__bridge id)kCFBooleanTrue;
     keychainItem[(__bridge id)kSecReturnAttributes] = (__bridge id)kCFBooleanTrue;

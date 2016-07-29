@@ -8,7 +8,6 @@
 
 #import "ViewController.h"
 #import "ICEKeychain.h"
-NSString *const keychainIdentify = @"waniyun";
 
 @interface ViewController ()
 

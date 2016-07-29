@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		176DD4C41D4B3212004A3711 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 176DD4C31D4B3212004A3711 /* Security.framework */; };
 		177A22E71D4B716600C10BB5 /* ICEKeychain.podspec in Resources */ = {isa = PBXBuildFile; fileRef = 177A22E61D4B716600C10BB5 /* ICEKeychain.podspec */; };
+		177A22EB1D4B9F9200C10BB5 /* ICEKeychain.m in Sources */ = {isa = PBXBuildFile; fileRef = 177A22EA1D4B9F9200C10BB5 /* ICEKeychain.m */; };
 		17F657471D4B319B00E1110C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 17F657461D4B319B00E1110C /* main.m */; };
 		17F6574A1D4B319B00E1110C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 17F657491D4B319B00E1110C /* AppDelegate.m */; };
 		17F6574D1D4B319B00E1110C /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 17F6574C1D4B319B00E1110C /* ViewController.m */; };
@@ -39,6 +40,8 @@
 /* Begin PBXFileReference section */
 		176DD4C31D4B3212004A3711 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		177A22E61D4B716600C10BB5 /* ICEKeychain.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = ICEKeychain.podspec; path = ../ICEKeychain.podspec; sourceTree = "<group>"; };
+		177A22E91D4B9F9200C10BB5 /* ICEKeychain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ICEKeychain.h; sourceTree = "<group>"; };
+		177A22EA1D4B9F9200C10BB5 /* ICEKeychain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ICEKeychain.m; sourceTree = "<group>"; };
 		17F657421D4B319B00E1110C /* test.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = test.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		17F657461D4B319B00E1110C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		17F657481D4B319B00E1110C /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -83,11 +86,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		177A22E81D4B9F9200C10BB5 /* Classes */ = {
+			isa = PBXGroup;
+			children = (
+				177A22E91D4B9F9200C10BB5 /* ICEKeychain.h */,
+				177A22EA1D4B9F9200C10BB5 /* ICEKeychain.m */,
+			);
+			name = Classes;
+			path = ../Classes;
+			sourceTree = "<group>";
+		};
 		17F657391D4B319B00E1110C = {
 			isa = PBXGroup;
 			children = (
 				176DD4C31D4B3212004A3711 /* Security.framework */,
 				177A22E61D4B716600C10BB5 /* ICEKeychain.podspec */,
+				177A22E81D4B9F9200C10BB5 /* Classes */,
 				17F657441D4B319B00E1110C /* test */,
 				17F6575E1D4B319B00E1110C /* testTests */,
 				17F657691D4B319B00E1110C /* testUITests */,
@@ -279,6 +293,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				17F6574D1D4B319B00E1110C /* ViewController.m in Sources */,
+				177A22EB1D4B9F9200C10BB5 /* ICEKeychain.m in Sources */,
 				17F6574A1D4B319B00E1110C /* AppDelegate.m in Sources */,
 				17F657471D4B319B00E1110C /* main.m in Sources */,
 			);
