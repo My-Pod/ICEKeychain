@@ -11,6 +11,16 @@
 #import <UIKit/UIKit.h>
 
 
+void ICELog(NSString *format, ...) {
+#ifdef DEBUG
+    va_list argptr;
+    va_start(argptr, format);
+    NSLogv(format, argptr);
+    va_end(argptr);
+#endif
+}
+
+
 @implementation ICEKeychain
 
 
@@ -79,14 +89,10 @@
 - (void)createKeychainItem{
     //判断当前钥匙串中是否已存在此值
     if (SecItemCopyMatching((__bridge CFDictionaryRef)[self keychainDic], NULL) == noErr) {
-#ifdef DEBUG
-        NSLog(@"已经存在");
-#endif
+        ICELog(@"已经存在");
     }else{
         OSStatus sts = SecItemAdd((__bridge CFDictionaryRef)[self keychainDic], NULL);
-#ifdef DEBUG
-      NSLog(@"创建%d",sts);
-#endif
+        ICELog(@"创建%d",sts);
     }
 }
 
@@ -100,17 +106,13 @@
     keychainItem[(__bridge id)kSecReturnAttributes] = (__bridge id)kCFBooleanFalse;
     
     OSStatus sts = SecItemUpdate((__bridge CFDictionaryRef)keychainItem, (__bridge CFDictionaryRef)newItem);
-#ifdef DEBUG
-    NSLog(@"更新%d",sts);
-#endif
+    ICELog(@"更新%d",sts);
 }
 
 //删除 keychainItem
 - (void)deletekeychainItem{
     OSStatus sts = SecItemDelete((__bridge CFDictionaryRef)[self keychainDic]);
-#ifdef DEBUG
-    NSLog(@"删除%d",sts);
-#endif
+    ICELog(@"删除%d",sts);
 }
 
 //从钥匙串获取 指定 key 的值.
@@ -122,9 +124,7 @@
         id value = resultDict[(__bridge id)key];
         return value;
     }else{
-#ifdef DEBUG
-       NSLog(@"获取密码错误%d",sts);  
-#endif
+       ICELog(@"获取密码错误%d",sts);
     }
     return nil;
 }
