@@ -10,6 +10,8 @@
 #import <Security/Security.h>
 #import <UIKit/UIKit.h>
 
+extern NSString*kKeychainServer;
+
 
 void ICELog(NSString *format, ...) {
 #ifdef DEBUG
@@ -32,44 +34,52 @@ void ICELog(NSString *format, ...) {
 
 #pragma mark - public method
 //保存用户名 和密码
-+ (void)saveUserName:(NSString *)userName andPassword:(NSString *)password{
++ (void)saveUserName:(NSString *)userName andPassword:(NSString *)password withServer:(NSString *)server{
     NSMutableDictionary *newItem = [NSMutableDictionary dictionary];
     newItem[(__bridge id)kSecValueData] = [password dataUsingEncoding:NSUTF8StringEncoding];
     newItem[(__bridge id)kSecAttrAccount] = userName;
-    [[self keychain] updateKeychainItem:newItem];
+    [[self keychain] updateKeychainItem:newItem withServer:server];
 }
 //保存用户名
-+ (void)savePassword:(NSString *)password{
-    NSMutableDictionary *newItem = [NSMutableDictionary dictionary];
-    newItem[(__bridge id)kSecValueData] = [password dataUsingEncoding:NSUTF8StringEncoding];
-    [[self keychain] updateKeychainItem:newItem];
-}
-
-//保存秘密
-+ (void)saveUserName:(NSString *)userName{
++ (void)saveUserName:(NSString *)userName withServer:(NSString *)server{
     NSMutableDictionary *newItem = [NSMutableDictionary dictionary];
     newItem[(__bridge id)kSecAttrAccount] = userName;
-    [[self keychain] updateKeychainItem:newItem];
+    [[self keychain] updateKeychainItem:newItem withServer:server];
+}
+//保存密码
++ (void)savePassword:(NSString *)password withServer:(NSString *)server{
+    NSMutableDictionary *newItem = [NSMutableDictionary dictionary];
+    newItem[(__bridge id)kSecValueData] = [password dataUsingEncoding:NSUTF8StringEncoding];
+    [[self keychain] updateKeychainItem:newItem withServer:server];
+}
+
+
+
++ (void)saveValue:(NSString *)vlaue withServer:(NSString *)server{
+    NSMutableDictionary *newItem = [NSMutableDictionary dictionary];
+    newItem[(__bridge id)kSecValueData] = [vlaue dataUsingEncoding:NSUTF8StringEncoding];
+    [[self keychain] updateKeychainItem:newItem withServer:server];
 }
 
 //获取用户名
-+ (NSString *)getUserName{
-    return [[ICEKeychain keychain] getKeychainItemWithKey:kSecAttrAccount];
++ (NSString *)getUserNameWithServer:(NSString *)server{
+    return [[ICEKeychain keychain] getKeychainItemWithKey:kSecAttrAccount withServer:server];
 }
 //获取密码
-+ (NSString *)getPassword{
-    return [[NSString alloc] initWithData:[[ICEKeychain keychain] getKeychainItemWithKey:kSecValueData] encoding:NSUTF8StringEncoding];
++ (NSString *)getPasswordWithServer:(NSString *)server{
+    return [[NSString alloc] initWithData:[[ICEKeychain keychain] getKeychainItemWithKey:kSecValueData withServer:server] encoding:NSUTF8StringEncoding];
+}
+
++ (NSString *)getValueWithServer:(NSString *)server{
+    return [[NSString alloc] initWithData:[[ICEKeychain keychain] getKeychainItemWithKey:kSecValueData withServer:server] encoding:NSUTF8StringEncoding]; 
 }
 //删除
-+ (void)deleteKeychianItem{
-    [[self keychain] deletekeychainItem];
++ (void)deleteKeychianItemWithServer:(NSString *)server{
+    [[self keychain] deletekeychainItemWithServer:server];
 }
+
 #pragma mark - private method
-
-
-// keychainItme 查询条件
-- (NSMutableDictionary *)keychainDic{
-    
+- (NSMutableDictionary *)keychianDicWithServer:(NSString *)server{
     NSMutableDictionary *keychainItem = [NSMutableDictionary dictionary];
     
     //Populate it with the data and the attributes we want to use.
@@ -77,30 +87,36 @@ void ICELog(NSString *format, ...) {
     keychainItem[(__bridge id)kSecClass] = (__bridge id)kSecClassInternetPassword; // We specify what kind of keychain item this is.
     keychainItem[(__bridge id)kSecAttrAccessible] = (__bridge id)kSecAttrAccessibleWhenUnlocked; // This item can only be accessed when the user unlocks the device.
     
-    keychainItem[(__bridge id)kSecAttrServer] = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleIdentifier"];;
+    keychainItem[(__bridge id)kSecAttrServer] = server;
     
     keychainItem[(__bridge id)kSecReturnData] = (__bridge id)kCFBooleanTrue;
     keychainItem[(__bridge id)kSecReturnAttributes] = (__bridge id)kCFBooleanTrue;
     
     return keychainItem;
+
 }
 
 //创建 keychainItem
-- (void)createKeychainItem{
+- (void)createKeychainItemWithServer:(NSString *)server;{
+    
     //判断当前钥匙串中是否已存在此值
-    if (SecItemCopyMatching((__bridge CFDictionaryRef)[self keychainDic], NULL) == noErr) {
+    if (SecItemCopyMatching((__bridge CFDictionaryRef)[self keychianDicWithServer:server], NULL) == noErr) {
         ICELog(@"已经存在");
     }else{
-        OSStatus sts = SecItemAdd((__bridge CFDictionaryRef)[self keychainDic], NULL);
+        OSStatus sts = SecItemAdd((__bridge CFDictionaryRef)[self keychianDicWithServer:server], NULL);
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:server];
+        
         ICELog(@"创建%d",sts);
     }
 }
 
 //更新 keychainItem
-- (void)updateKeychainItem:(NSDictionary *)newItem{
-    [self createKeychainItem];
+- (void)updateKeychainItem:(NSDictionary *)newItem
+                withServer:(NSString *)server
+{
+    [self createKeychainItemWithServer:server];
     
-    NSMutableDictionary *keychainItem = [self keychainDic];
+    NSMutableDictionary *keychainItem = [self keychianDicWithServer:server];
     //Must set these back to false for SecItemUpdate to work
     keychainItem[(__bridge id)kSecReturnData] = (__bridge id)kCFBooleanFalse;
     keychainItem[(__bridge id)kSecReturnAttributes] = (__bridge id)kCFBooleanFalse;
@@ -110,15 +126,21 @@ void ICELog(NSString *format, ...) {
 }
 
 //删除 keychainItem
-- (void)deletekeychainItem{
-    OSStatus sts = SecItemDelete((__bridge CFDictionaryRef)[self keychainDic]);
+- (void)deletekeychainItemWithServer:(NSString *)server{
+    OSStatus sts = SecItemDelete((__bridge CFDictionaryRef)[self keychianDicWithServer:server]);
     ICELog(@"删除%d",sts);
 }
 
 //从钥匙串获取 指定 key 的值.
-- (id)getKeychainItemWithKey:(CFStringRef)key{
+- (id)getKeychainItemWithKey:(CFStringRef)key withServer:(NSString *)server{
     CFDictionaryRef result = nil;
-    OSStatus sts = SecItemCopyMatching((__bridge CFDictionaryRef)[self keychainDic], (CFTypeRef *)&result);
+    BOOL keychainRecord = [[NSUserDefaults standardUserDefaults] boolForKey:server];
+    if (keychainRecord == NO) {
+        [self deletekeychainItemWithServer:server];
+        return nil;
+    }
+    
+    OSStatus sts = SecItemCopyMatching((__bridge CFDictionaryRef)[self keychianDicWithServer:server], (CFTypeRef *)&result);
     if (sts == noErr) {
         NSDictionary *resultDict = (__bridge_transfer NSDictionary *)result;
         id value = resultDict[(__bridge id)key];

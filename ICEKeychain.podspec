@@ -13,5 +13,6 @@ s.source           = { :git => 'https://github.com/My-Pod/ICEKeychain.git', :tag
 
 s.ios.deployment_target = '7.0'
 s.source_files = 'Classes/*.{h,m}'
+ss.frameworks = 'Security'
 
 end
