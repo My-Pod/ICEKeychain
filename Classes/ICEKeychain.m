@@ -54,12 +54,14 @@ void ICELog(NSString *format, ...) {
 - (void)createKeychainItemWithServer:(NSString *)server;{
     
     //判断是否是第一次启动, 如果是第一次启动, 则先删除之前的, 再创建新的.如果不是第一次使用, 则说明已经创建过了,则无需重复创建
-    BOOL isNotFirstLaunch = [[NSUserDefaults standardUserDefaults] boolForKey:@"isFirstLaunch"];
+    NSString *identifyStr = [NSString stringWithFormat:@"identify + %@",server];
+    NSString *identify = [[NSUserDefaults standardUserDefaults] objectForKey:identifyStr];
     
-    if (isNotFirstLaunch == NO) {
+    BOOL isFirstLaunch = [identify isEqualToString:identifyStr] ? NO : YES;
+    if (isFirstLaunch == YES) {
         [self deletekeychainItemWithServer:server];
         OSStatus sts = SecItemAdd((__bridge CFDictionaryRef)[self keychianDicWithServer:server], NULL);
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"isFirstLaunch"];
+        [[NSUserDefaults standardUserDefaults] setObject:identifyStr forKey:identifyStr];
         ICELog(@"创建 keychainItme: %d", sts);
     }else{
         //如果不存在则创建
@@ -100,6 +102,9 @@ void ICELog(NSString *format, ...) {
 
 //从钥匙串获取 指定 key 的值.
 - (id)getKeychainItemWithKey:(CFStringRef)key withServer:(NSString *)server{
+    
+    //先创建
+    [self createKeychainItemWithServer:server];
     CFDictionaryRef result = nil;
     
     OSStatus sts = SecItemCopyMatching((__bridge CFDictionaryRef)[self keychianDicWithServer:server], (CFTypeRef *)&result);

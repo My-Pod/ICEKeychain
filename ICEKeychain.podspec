@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
 s.name             = 'ICEKeychain'
-s.version          = '1.1.0'
+s.version          = '1.1.1'
 s.summary          = '钥匙串存取密码的封装'
 s.description      = <<-DESC
 TODO: 封装用户名和密码存取钥匙串的方法
