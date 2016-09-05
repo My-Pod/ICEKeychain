@@ -1,16 +1,13 @@
 //
-//  ICEKeychain.m
-//  LoginText
+//  ICEKeychain1.m
+//  ICEKeychain
 //
-//  Created by WLY on 16/7/29.
+//  Created by WLY on 16/9/5.
 //  Copyright © 2016年 WLY. All rights reserved.
 //
 
 #import "ICEKeychain.h"
-#import <Security/Security.h>
-#import <UIKit/UIKit.h>
 
-extern NSString*kKeychainServer;
 
 
 void ICELog(NSString *format, ...) {
@@ -22,63 +19,20 @@ void ICELog(NSString *format, ...) {
 #endif
 }
 
-
 @implementation ICEKeychain
 
 
+#pragma mark - life cycle
 
-+ (instancetype)keychain{
-    ICEKeychain *keychain = [[ICEKeychain alloc] init];
-    return keychain;
-}
-
-#pragma mark - public method
-//保存用户名 和密码
-+ (void)saveUserName:(NSString *)userName andPassword:(NSString *)password withServer:(NSString *)server{
-    NSMutableDictionary *newItem = [NSMutableDictionary dictionary];
-    newItem[(__bridge id)kSecValueData] = [password dataUsingEncoding:NSUTF8StringEncoding];
-    newItem[(__bridge id)kSecAttrAccount] = userName;
-    [[self keychain] updateKeychainItem:newItem withServer:server];
-}
-//保存用户名
-+ (void)saveUserName:(NSString *)userName withServer:(NSString *)server{
-    NSMutableDictionary *newItem = [NSMutableDictionary dictionary];
-    newItem[(__bridge id)kSecAttrAccount] = userName;
-    [[self keychain] updateKeychainItem:newItem withServer:server];
-}
-//保存密码
-+ (void)savePassword:(NSString *)password withServer:(NSString *)server{
-    NSMutableDictionary *newItem = [NSMutableDictionary dictionary];
-    newItem[(__bridge id)kSecValueData] = [password dataUsingEncoding:NSUTF8StringEncoding];
-    [[self keychain] updateKeychainItem:newItem withServer:server];
++ (ICEKeychain *)keychain{
+    return [[ICEKeychain alloc] init];
 }
 
 
-
-+ (void)saveValue:(NSString *)vlaue withServer:(NSString *)server{
-    NSMutableDictionary *newItem = [NSMutableDictionary dictionary];
-    newItem[(__bridge id)kSecValueData] = [vlaue dataUsingEncoding:NSUTF8StringEncoding];
-    [[self keychain] updateKeychainItem:newItem withServer:server];
-}
-
-//获取用户名
-+ (NSString *)getUserNameWithServer:(NSString *)server{
-    return [[ICEKeychain keychain] getKeychainItemWithKey:kSecAttrAccount withServer:server];
-}
-//获取密码
-+ (NSString *)getPasswordWithServer:(NSString *)server{
-    return [[NSString alloc] initWithData:[[ICEKeychain keychain] getKeychainItemWithKey:kSecValueData withServer:server] encoding:NSUTF8StringEncoding];
-}
-
-+ (NSString *)getValueWithServer:(NSString *)server{
-    return [[NSString alloc] initWithData:[[ICEKeychain keychain] getKeychainItemWithKey:kSecValueData withServer:server] encoding:NSUTF8StringEncoding]; 
-}
-//删除
-+ (void)deleteKeychianItemWithServer:(NSString *)server{
-    [[self keychain] deletekeychainItemWithServer:server];
-}
 
 #pragma mark - private method
+
+//获取设置信息
 - (NSMutableDictionary *)keychianDicWithServer:(NSString *)server{
     NSMutableDictionary *keychainItem = [NSMutableDictionary dictionary];
     
@@ -93,27 +47,46 @@ void ICELog(NSString *format, ...) {
     keychainItem[(__bridge id)kSecReturnAttributes] = (__bridge id)kCFBooleanTrue;
     
     return keychainItem;
-
+    
 }
 
-//创建 keychainItem
+//创建 keychainItem
 - (void)createKeychainItemWithServer:(NSString *)server;{
     
-    //判断当前钥匙串中是否已存在此值
-    if (SecItemCopyMatching((__bridge CFDictionaryRef)[self keychianDicWithServer:server], NULL) == noErr) {
-        ICELog(@"已经存在");
-    }else{
+    //判断是否是第一次启动, 如果是第一次启动, 则先删除之前的, 再创建新的.如果不是第一次使用, 则说明已经创建过了,则无需重复创建
+    BOOL isNotFirstLaunch = [[NSUserDefaults standardUserDefaults] boolForKey:@"isFirstLaunch"];
+    
+    if (isNotFirstLaunch == NO) {
+        [self deletekeychainItemWithServer:server];
         OSStatus sts = SecItemAdd((__bridge CFDictionaryRef)[self keychianDicWithServer:server], NULL);
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:server];
-        
-        ICELog(@"创建%d",sts);
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"isFirstLaunch"];
+        ICELog(@"创建 keychainItme: %d", sts);
+    }else{
+        //如果不存在则创建
+        if (SecItemCopyMatching((__bridge CFDictionaryRef)[self keychianDicWithServer:server], NULL) != noErr) {
+            OSStatus sts = SecItemAdd((__bridge CFDictionaryRef)[self keychianDicWithServer:server], NULL);
+            ICELog(@"创建 keychainItme: %d", sts);
+        }
     }
 }
+
+//删除 keychainItem
+- (void)deletekeychainItemWithServer:(NSString *)server{
+    if (SecItemCopyMatching((__bridge CFDictionaryRef)[self keychianDicWithServer:server], NULL) == noErr) {
+        OSStatus sts = SecItemDelete((__bridge CFDictionaryRef)[self keychianDicWithServer:server]);
+        ICELog(@"删除%d",sts);
+    }else{
+        ICELog(@"不存在, 删除失败!");
+    }
+
+}
+
 
 //更新 keychainItem
 - (void)updateKeychainItem:(NSDictionary *)newItem
                 withServer:(NSString *)server
 {
+    //更新之前先调用创建.
     [self createKeychainItemWithServer:server];
     
     NSMutableDictionary *keychainItem = [self keychianDicWithServer:server];
@@ -125,20 +98,9 @@ void ICELog(NSString *format, ...) {
     ICELog(@"更新%d",sts);
 }
 
-//删除 keychainItem
-- (void)deletekeychainItemWithServer:(NSString *)server{
-    OSStatus sts = SecItemDelete((__bridge CFDictionaryRef)[self keychianDicWithServer:server]);
-    ICELog(@"删除%d",sts);
-}
-
 //从钥匙串获取 指定 key 的值.
 - (id)getKeychainItemWithKey:(CFStringRef)key withServer:(NSString *)server{
     CFDictionaryRef result = nil;
-    BOOL keychainRecord = [[NSUserDefaults standardUserDefaults] boolForKey:server];
-    if (keychainRecord == NO) {
-        [self deletekeychainItemWithServer:server];
-        return nil;
-    }
     
     OSStatus sts = SecItemCopyMatching((__bridge CFDictionaryRef)[self keychianDicWithServer:server], (CFTypeRef *)&result);
     if (sts == noErr) {
@@ -146,9 +108,21 @@ void ICELog(NSString *format, ...) {
         id value = resultDict[(__bridge id)key];
         return value;
     }else{
-       ICELog(@"获取密码错误%d",sts);
+        ICELog(@"获取密码错误%d",sts);
+        return nil;
     }
-    return nil;
+}
+
+#pragma mark - public methods
+
++ (void)saveValue:(NSString *)vlaue withServer:(NSString *)server{
+    NSMutableDictionary *newItem = [NSMutableDictionary dictionary];
+    newItem[(__bridge id)kSecValueData] = [vlaue dataUsingEncoding:NSUTF8StringEncoding];
+    [[self keychain] updateKeychainItem:newItem withServer:server];
+}
+
++ (NSString *)getValueWithServer:(NSString *)server{
+    return [[NSString alloc] initWithData:[[ICEKeychain keychain] getKeychainItemWithKey:kSecValueData withServer:server] encoding:NSUTF8StringEncoding];
 }
 
 
